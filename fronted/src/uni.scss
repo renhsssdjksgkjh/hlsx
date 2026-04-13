@@ -1,0 +1,19 @@
+@import 'uview-plus/theme.scss';
+
+/* 品牌主色（覆盖 uview 默认蓝） */
+$u-primary: #ff7000;
+$u-primary-dark: #e05800;
+$u-primary-light: #fff0e6;
+$u-primary-disabled: #ffb380;
+
+$hl-primary: #ff7000;
+$hl-primary-light: #fff0e6;
+$hl-text: #1a1a1a;
+$hl-muted: #666;
+$hl-border: #e5e5e5;
+
+page {
+  background-color: #f6f7f8;
+  color: $hl-text;
+  font-size: 28rpx;
+}

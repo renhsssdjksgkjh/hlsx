@@ -1,0 +1,23 @@
+{
+  "name": "狐灵商学",
+  "appid": "__UNI__HULING",
+  "description": "狐灵仙草奶茶培训学习",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxa91cd3c489101207",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "mergeVirtualHostAttributes": true,
+    "permission": {}
+  },
+  "vueVersion": "3",
+  "uniStatistics": {
+    "enable": false
+  }
+}
