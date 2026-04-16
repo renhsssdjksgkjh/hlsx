@@ -4,8 +4,8 @@
     <div class="bg-grid" aria-hidden="true" />
     <div class="login-card">
       <div class="brand">
-        <div class="logo-ring">
-          <span class="logo-inner">狐</span>
+        <div class="brand-logo-wrap">
+          <img class="brand-logo" src="/fox-logo.png" alt="狐灵商学" width="72" height="72" />
         </div>
         <h1>狐灵商学</h1>
         <p class="sub">管理后台</p>
@@ -48,13 +48,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { adminLogin } from '@/api/http'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const username = ref('admin')
@@ -71,7 +72,12 @@ async function onSubmit() {
     const { token } = await adminLogin(username.value.trim(), password.value)
     auth.setToken(token)
     ElMessage.success('登录成功')
-    await router.replace({ name: 'users' })
+    const redir = route.query.redirect
+    if (typeof redir === 'string' && redir.startsWith('/')) {
+      await router.replace(redir)
+    } else {
+      await router.replace({ name: 'dashboard' })
+    }
   } catch (e: unknown) {
     const msg =
       e && typeof e === 'object' && 'message' in e
@@ -145,13 +151,13 @@ async function onSubmit() {
   margin-bottom: 1.75rem;
 }
 
-.logo-ring {
-  width: 64px;
-  height: 64px;
+.brand-logo-wrap {
+  width: 72px;
+  height: 72px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c5cff, #00d4aa);
   padding: 3px;
+  background: linear-gradient(135deg, #7c5cff, #00d4aa);
   animation: pulse 3s ease-in-out infinite;
 }
 
@@ -165,17 +171,13 @@ async function onSubmit() {
   }
 }
 
-.logo-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-logo {
+  display: block;
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  object-fit: cover;
   background: #121423;
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 700;
 }
 
 .brand h1 {

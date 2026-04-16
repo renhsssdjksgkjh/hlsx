@@ -15,21 +15,30 @@ const router = createRouter({
       component: () => import('@/views/LayoutView.vue'),
       meta: { requiresAuth: true },
       children: [
-        { path: '', redirect: '/users' },
+        { path: '', redirect: '/dashboard' },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/DashboardView.vue'),
+          meta: { title: '概览', affix: true },
+        },
         {
           path: 'users',
           name: 'users',
           component: () => import('@/views/UsersView.vue'),
+          meta: { title: '用户信息' },
         },
         {
           path: 'videos',
           name: 'videos',
           component: () => import('@/views/VideosView.vue'),
+          meta: { title: '视频列表' },
         },
         {
           path: 'password',
           name: 'password',
           component: () => import('@/views/PasswordView.vue'),
+          meta: { title: '修改密码' },
         },
       ],
     },
@@ -40,7 +49,7 @@ router.beforeEach((to, _from, next) => {
   const auth = useAuthStore()
   if (to.meta.public) {
     if (auth.isLoggedIn && to.name === 'login') {
-      next({ name: 'users' })
+      next({ name: 'dashboard' })
       return
     }
     next()

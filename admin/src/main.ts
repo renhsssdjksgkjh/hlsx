@@ -6,6 +6,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
+import { useTabsStore } from '@/stores/tabs'
 
 const app = createApp(App)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -14,4 +15,16 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
+
+router.afterEach((to) => {
+  if (to.name === 'login') {
+    useTabsStore().reset()
+    return
+  }
+  const names = ['dashboard', 'users', 'videos', 'password']
+  if (typeof to.name === 'string' && names.includes(to.name)) {
+    useTabsStore().addTab(to)
+  }
+})
+
 app.mount('#app')

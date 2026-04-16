@@ -76,10 +76,17 @@ npm run dev
 |------|------|------|
 | POST | `/api/admin/login` |  body: `{ username, password }` |
 | PUT | `/api/admin/password` | 管理员登录后修改自身密码：`old_password`, `new_password` |
-| GET | `/api/admin/users` | 学员列表（`hry_user`，不含密码哈希） |
+| GET | `/api/admin/stats` | 仪表盘：学员数、视频数、测验记录数、题目数 |
+| GET | `/api/admin/stats/charts` | 图表数据：**全部**注册学员与**全部**视频课程的平均得分率；无测验记录时 `avgAccuracy` 为 `null` |
+| GET | `/api/admin/questions` | 全部题目题干（含所属课程名、题型；不含选项与答案） |
+| GET | `/api/admin/quiz-records` | 全站测验提交记录；query：`limit`（默认 50，最大 200）、`offset` |
+| GET | `/api/admin/users` | 学员列表；query：`page`、`pageSize`、`q`（手机号/昵称模糊） |
+| GET | `/api/admin/users/:id/learning` | 某学员学情：各课进度、是否算看完、每课最近一次测验得分与正确率 |
+| GET | `/api/admin/users/:id/quiz-records` | 某学员测验提交历史；query：`limit`、`offset` |
 | PUT | `/api/admin/users/:id` | 编辑：`phone`, `nickname`, `password`（可选） |
 | DELETE | `/api/admin/users/:id` | 删除用户及关联 `hry_quiz_record`、`hry_progress` |
-| GET | `/api/admin/videos` | 视频列表 |
+| GET | `/api/admin/videos` | 视频列表；query：`page`、`pageSize`、`q`（标题/URL 模糊） |
+| GET | `/api/admin/videos/:id/questions` | 某课题库明细（含正确答案，仅管理端） |
 | PUT | `/api/admin/videos/:id` | 编辑：`title`, `url`, `sort_order`, `duration_sec`（可为 null） |
 | DELETE | `/api/admin/videos/:id` | 删除视频及关联题目、进度、测验记录 |
 
