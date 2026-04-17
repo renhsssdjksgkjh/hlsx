@@ -1,4 +1,5 @@
-const getBase = () => {
+/** 后端 API 根地址（与 uni.request / uploadFile 一致） */
+export function getApiBase() {
   const v = import.meta.env.VITE_API_BASE
   if (v) return v.replace(/\/$/, '')
   return 'http://localhost:3001'
@@ -18,7 +19,7 @@ export function request<T = unknown>(options: {
   skipAuth?: boolean
 }): Promise<T> {
   const token = options.skipAuth ? '' : uni.getStorageSync('token') as string
-  const base = getBase()
+  const base = getApiBase()
   const fullUrl = options.url.startsWith('http') ? options.url : `${base}${options.url}`
 
   return new Promise((resolve, reject) => {

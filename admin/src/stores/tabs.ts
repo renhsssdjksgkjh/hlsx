@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import type { RouteLocationNormalized } from 'vue-router'
 import router from '@/router'
 
-const LAYOUT_NAMES = new Set(['dashboard', 'users', 'videos', 'password'])
+const LAYOUT_NAMES = new Set(['dashboard', 'users', 'videos', 'notices', 'password'])
 
 export type TabItem = {
   fullPath: string

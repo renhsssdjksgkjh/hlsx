@@ -4,6 +4,9 @@ const { getPool } = require('../config/db');
 const NO_DURATION_MIN_SEC = 30;
 const END_TOLERANCE_SEC = 3;
 
+module.exports.NO_DURATION_MIN_SEC = NO_DURATION_MIN_SEC;
+module.exports.END_TOLERANCE_SEC = END_TOLERANCE_SEC;
+
 /**
  * @returns {Promise<{ ok: true } | { ok: false, message: string }>}
  */
@@ -30,4 +33,4 @@ async function assertUserWatchedVideo(userId, videoId) {
   return { ok: true };
 }
 
-module.exports = { assertUserWatchedVideo };
+module.exports.assertUserWatchedVideo = assertUserWatchedVideo;

@@ -590,4 +590,226 @@ router.delete('/videos/:id', async (req, res) => {
   }
 });
 
+/** ---------- 群公告 hry_notice ---------- */
+
+async function replaceNoticeUsers(conn, noticeId, targetType, userIds) {
+  await conn.query('DELETE FROM hry_notice_user WHERE notice_id = ?', [noticeId]);
+  if (targetType !== 'selected' || !Array.isArray(userIds) || userIds.length === 0) {
+    return;
+  }
+  const ids = [...new Set(userIds.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0))];
+  for (const uid of ids) {
+    await conn.query('INSERT INTO hry_notice_user (notice_id, user_id) VALUES (?, ?)', [noticeId, uid]);
+  }
+}
+
+/** GET /api/admin/notices 分页 */
+router.get('/notices', async (req, res) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
+  const offset = (page - 1) * pageSize;
+
+  const [[countRow]] = await pool.query('SELECT COUNT(*) AS total FROM hry_notice');
+  const [rows] = await pool.query(
+    `SELECT n.id, n.title, n.body, n.created_at, n.published_at, n.target_type, n.admin_id,
+            a.username AS admin_username
+     FROM hry_notice n
+     INNER JOIN hry_admin a ON a.id = n.admin_id
+     ORDER BY n.created_at DESC, n.id DESC
+     LIMIT ? OFFSET ?`,
+    [pageSize, offset]
+  );
+
+  return res.json({
+    code: 0,
+    data: {
+      list: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        body: r.body,
+        created_at: r.created_at,
+        published_at: r.published_at,
+        target_type: r.target_type,
+        admin_id: r.admin_id,
+        admin_username: r.admin_username,
+      })),
+      total: Number(countRow.total) || 0,
+      page,
+      pageSize,
+    },
+  });
+});
+
+/** GET /api/admin/notices/:id 单条（含 user_ids） */
+router.get('/notices/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ code: 400, message: '无效的公告 ID' });
+  }
+  const [rows] = await pool.query(
+    `SELECT n.id, n.title, n.body, n.created_at, n.published_at, n.target_type, n.admin_id,
+            a.username AS admin_username
+     FROM hry_notice n
+     INNER JOIN hry_admin a ON a.id = n.admin_id
+     WHERE n.id = ?`,
+    [id]
+  );
+  if (!rows.length) {
+    return res.status(404).json({ code: 404, message: '公告不存在' });
+  }
+  const [urows] = await pool.query(
+    'SELECT user_id FROM hry_notice_user WHERE notice_id = ? ORDER BY user_id ASC',
+    [id]
+  );
+  const row = rows[0];
+  return res.json({
+    code: 0,
+    data: {
+      id: row.id,
+      title: row.title,
+      body: row.body,
+      created_at: row.created_at,
+      published_at: row.published_at,
+      target_type: row.target_type,
+      admin_id: row.admin_id,
+      admin_username: row.admin_username,
+      user_ids: urows.map((u) => u.user_id),
+    },
+  });
+});
+
+/** POST /api/admin/notices */
+router.post('/notices', async (req, res) => {
+  const { title, body, target_type: targetType, user_ids: userIds, publish } = req.body || {};
+  const t = title != null ? String(title).trim() : '';
+  const b = body != null ? String(body).trim() : '';
+  if (!t || !b) {
+    return res.status(400).json({ code: 400, message: '请填写标题与正文' });
+  }
+  const tt = targetType === 'selected' ? 'selected' : 'all';
+  if (tt === 'selected' && (!Array.isArray(userIds) || userIds.length === 0)) {
+    return res.status(400).json({ code: 400, message: '指定用户时请至少选择一名学员' });
+  }
+  const pub = Boolean(publish);
+  const adminId = req.admin.id;
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const publishedAt = pub ? new Date() : null;
+    const [ins] = await conn.query(
+      `INSERT INTO hry_notice (title, body, published_at, admin_id, target_type)
+       VALUES (?, ?, ?, ?, ?)`,
+      [t, b, publishedAt, adminId, tt]
+    );
+    const noticeId = ins.insertId;
+    await replaceNoticeUsers(conn, noticeId, tt, userIds || []);
+    await conn.commit();
+    const [rows] = await pool.query(
+      `SELECT n.id, n.title, n.body, n.created_at, n.published_at, n.target_type, n.admin_id
+       FROM hry_notice n WHERE n.id = ?`,
+      [noticeId]
+    );
+    const [urows] = await pool.query('SELECT user_id FROM hry_notice_user WHERE notice_id = ?', [noticeId]);
+    return res.json({
+      code: 0,
+      data: {
+        ...rows[0],
+        user_ids: urows.map((x) => x.user_id),
+      },
+    });
+  } catch (e) {
+    await conn.rollback();
+    console.error(e);
+    return res.status(500).json({ code: 500, message: '创建失败' });
+  } finally {
+    conn.release();
+  }
+});
+
+/** PUT /api/admin/notices/:id */
+router.put('/notices/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ code: 400, message: '无效的公告 ID' });
+  }
+  const { title, body, target_type: targetType, user_ids: userIds, publish } = req.body || {};
+  const t = title != null ? String(title).trim() : '';
+  const b = body != null ? String(body).trim() : '';
+  if (!t || !b) {
+    return res.status(400).json({ code: 400, message: '请填写标题与正文' });
+  }
+  const tt = targetType === 'selected' ? 'selected' : 'all';
+  if (tt === 'selected' && (!Array.isArray(userIds) || userIds.length === 0)) {
+    return res.status(400).json({ code: 400, message: '指定用户时请至少选择一名学员' });
+  }
+  const pub = Boolean(publish);
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [exist] = await conn.query('SELECT id FROM hry_notice WHERE id = ?', [id]);
+    if (!exist.length) {
+      await conn.rollback();
+      return res.status(404).json({ code: 404, message: '公告不存在' });
+    }
+    const publishedAt = pub ? new Date() : null;
+    await conn.query(
+      `UPDATE hry_notice SET title = ?, body = ?, published_at = ?, target_type = ? WHERE id = ?`,
+      [t, b, publishedAt, tt, id]
+    );
+    await replaceNoticeUsers(conn, id, tt, userIds || []);
+    await conn.commit();
+    const [rows] = await pool.query(
+      `SELECT n.id, n.title, n.body, n.created_at, n.published_at, n.target_type, n.admin_id
+       FROM hry_notice n WHERE n.id = ?`,
+      [id]
+    );
+    const [urows] = await pool.query('SELECT user_id FROM hry_notice_user WHERE notice_id = ?', [id]);
+    return res.json({
+      code: 0,
+      data: {
+        ...rows[0],
+        user_ids: urows.map((x) => x.user_id),
+      },
+    });
+  } catch (e) {
+    await conn.rollback();
+    console.error(e);
+    return res.status(500).json({ code: 500, message: '更新失败' });
+  } finally {
+    conn.release();
+  }
+});
+
+/** DELETE /api/admin/notices/:id */
+router.delete('/notices/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ code: 400, message: '无效的公告 ID' });
+  }
+  const [r] = await pool.query('DELETE FROM hry_notice WHERE id = ?', [id]);
+  if (r.affectedRows === 0) {
+    return res.status(404).json({ code: 404, message: '公告不存在' });
+  }
+  return res.json({ code: 0, message: '已删除' });
+});
+
+/** POST /api/admin/notices/:id/publish 仅发布（不改变正文） */
+router.post('/notices/:id/publish', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ code: 400, message: '无效的公告 ID' });
+  }
+  const [r] = await pool.query('UPDATE hry_notice SET published_at = NOW() WHERE id = ?', [id]);
+  if (r.affectedRows === 0) {
+    return res.status(404).json({ code: 404, message: '公告不存在' });
+  }
+  const [rows] = await pool.query(
+    'SELECT id, title, body, created_at, published_at, target_type, admin_id FROM hry_notice WHERE id = ?',
+    [id]
+  );
+  return res.json({ code: 0, data: rows[0] });
+});
+
 module.exports = router;

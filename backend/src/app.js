@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -21,6 +22,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/admin', adminRoutes);
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use((req, res) => {
   res.status(404).json({ code: 404, message: 'Not Found' });

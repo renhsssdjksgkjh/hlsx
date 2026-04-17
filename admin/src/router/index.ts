@@ -35,6 +35,12 @@ const router = createRouter({
           meta: { title: '视频列表' },
         },
         {
+          path: 'notices',
+          name: 'notices',
+          component: () => import('@/views/NoticesView.vue'),
+          meta: { title: '群公告管理' },
+        },
+        {
           path: 'password',
           name: 'password',
           component: () => import('@/views/PasswordView.vue'),

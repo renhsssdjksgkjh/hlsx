@@ -65,8 +65,9 @@ npm run dev
 | PUT | `/api/videos/:id/progress` | 是 |
 | GET | `/api/videos/:id/questions` | 是（需已按进度看完对应视频） |
 | POST | `/api/videos/:id/quiz/submit` | 是（需已按进度看完对应视频） |
-| GET | `/api/quiz/wrong` | 是（当前用户错题汇总，数据来自 `hry_quiz_record`） |
+| GET | `/api/quiz/wrong` | 是（当前用户错题汇总，数据来自 `hry_quiz_record`，并排除 `hry_wrong_removed`） |
 | GET | `/api/quiz/wrong/:questionId` | 是（单题详情，须为该用户错题集中的题目） |
+| DELETE | `/api/quiz/wrong/:questionId` | 是（从错题集移出该题，写入 `hry_wrong_removed`） |
 
 ### 管理后台（`/api/admin`，与学员端 token 不通用）
 
@@ -253,7 +254,7 @@ if (json.data && json.data.token) {
 
 - 方法：GET  
 - URL：`{{baseUrl}}/api/quiz/wrong`  
-- 说明：解析当前用户所有 `hry_quiz_record.detail_json` 中 `is_correct: false` 的题目，去重后关联 `hry_question` / `hry_video` 返回题干、解析、所属课程等。
+- 说明：解析当前用户所有 `hry_quiz_record.detail_json` 中 `is_correct: false` 的题目，去重后关联 `hry_question` / `hry_video` 返回题干、解析、所属课程等；已写入 `hry_wrong_removed` 的题目不再出现在列表中。
 
 #### 9. 错题单题 `GET /api/quiz/wrong/:questionId`
 
@@ -261,7 +262,13 @@ if (json.data && json.data.token) {
 - URL 示例：`{{baseUrl}}/api/quiz/wrong/12`（`12` 为 `hry_question.id`）  
 - 说明：返回结构与列表中单项一致；若该题不在当前用户错题集中则 `404`。
 
-#### 10. 提交测验 `POST /api/videos/:id/quiz/submit`
+#### 10. 错题移出 `DELETE /api/quiz/wrong/:questionId`
+
+- 方法：DELETE  
+- URL 示例：`{{baseUrl}}/api/quiz/wrong/12`  
+- 说明：若该题在测验记录中曾答错，则向 `hry_wrong_removed` 插入 `(user_id, question_id)`，之后错题列表不再包含该题；不改变历史 `hry_quiz_record`。若该题从未答错过当前用户，返回 `404`。
+
+#### 11. 提交测验 `POST /api/videos/:id/quiz/submit`
 
 - 方法：POST  
 - URL 示例：`{{baseUrl}}/api/videos/1/quiz/submit`  

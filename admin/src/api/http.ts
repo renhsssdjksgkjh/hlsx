@@ -249,4 +249,56 @@ export async function deleteVideo(id: number) {
   await http.delete(`/api/admin/videos/${id}`)
 }
 
+export type AdminNoticeRow = {
+  id: number
+  title: string
+  body: string
+  created_at: string
+  published_at: string | null
+  target_type: 'all' | 'selected'
+  admin_id: number
+  admin_username: string
+}
+
+export async function fetchNotices(params?: { page?: number; pageSize?: number }) {
+  return (await http.get('/api/admin/notices', { params })) as Paginated<AdminNoticeRow>
+}
+
+export type AdminNoticeDetail = AdminNoticeRow & { user_ids: number[] }
+
+export async function fetchNotice(id: number) {
+  return (await http.get(`/api/admin/notices/${id}`)) as AdminNoticeDetail
+}
+
+export async function createNotice(body: {
+  title: string
+  body: string
+  target_type: 'all' | 'selected'
+  user_ids?: number[]
+  publish: boolean
+}) {
+  return (await http.post('/api/admin/notices', body)) as AdminNoticeDetail
+}
+
+export async function updateNotice(
+  id: number,
+  body: {
+    title: string
+    body: string
+    target_type: 'all' | 'selected'
+    user_ids?: number[]
+    publish: boolean
+  }
+) {
+  return (await http.put(`/api/admin/notices/${id}`, body)) as AdminNoticeDetail
+}
+
+export async function deleteNotice(id: number) {
+  await http.delete(`/api/admin/notices/${id}`)
+}
+
+export async function publishNotice(id: number) {
+  return (await http.post(`/api/admin/notices/${id}/publish`)) as AdminNoticeRow
+}
+
 export default http

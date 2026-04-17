@@ -48,6 +48,23 @@
           </template>
         </u-input>
         <u-gap height="24" />
+        <u-text text="确认密码" size="14" color="#303133" />
+        <u-gap height="8" />
+        <u-input
+          v-model="passwordConfirm"
+          :password="pwdConfirmMasked"
+          :password-visibility-toggle="false"
+          border="surround"
+          placeholder="请再次输入密码"
+          cursor-color="#ff7000"
+        >
+          <template #suffix>
+            <view class="pwd-eye-hit" @tap.stop="pwdConfirmMasked = !pwdConfirmMasked">
+              <view class="pwd-eye-icon" :class="{ 'pwd-eye-icon--masked': pwdConfirmMasked }" />
+            </view>
+          </template>
+        </u-input>
+        <u-gap height="24" />
         <u-button
           text="注册"
           type="primary"
@@ -68,7 +85,9 @@ import * as authApi from '@/api/auth'
 const nickname = ref('')
 const phone = ref('')
 const password = ref('')
+const passwordConfirm = ref('')
 const pwdMasked = ref(true)
+const pwdConfirmMasked = ref(true)
 const loading = ref(false)
 
 async function onSubmit() {
@@ -83,6 +102,14 @@ async function onSubmit() {
   }
   if (!password.value) {
     uni.showToast({ title: '请输入密码', icon: 'none' })
+    return
+  }
+  if (!passwordConfirm.value) {
+    uni.showToast({ title: '请再次输入密码', icon: 'none' })
+    return
+  }
+  if (password.value !== passwordConfirm.value) {
+    uni.showToast({ title: '两次密码不一致', icon: 'none' })
     return
   }
   loading.value = true

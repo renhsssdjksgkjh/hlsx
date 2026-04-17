@@ -20,3 +20,7 @@ export function getWrongQuestions() {
 export function getWrongQuestionDetail(questionId: number) {
   return request<WrongQuestionItem>({ url: `/api/quiz/wrong/${questionId}` })
 }
+
+export function removeWrongQuestion(questionId: number) {
+  return request<null>({ url: `/api/quiz/wrong/${questionId}`, method: 'DELETE' })
+}

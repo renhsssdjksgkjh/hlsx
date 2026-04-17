@@ -32,6 +32,10 @@
             <el-icon><VideoPlay /></el-icon>
             <span>视频列表</span>
           </el-menu-item>
+          <el-menu-item index="/notices">
+            <el-icon><Bell /></el-icon>
+            <span>群公告管理</span>
+          </el-menu-item>
           <el-menu-item index="/password">
             <el-icon><Key /></el-icon>
             <span>修改密码</span>
@@ -92,7 +96,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, VideoPlay, Key, Close, Fold, Expand } from '@element-plus/icons-vue'
+import { DataAnalysis, User, VideoPlay, Bell, Key, Close, Fold, Expand } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useTabsStore } from '@/stores/tabs'
