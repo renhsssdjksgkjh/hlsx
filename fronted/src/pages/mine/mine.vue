@@ -40,8 +40,15 @@
           title="群公告"
           :is-link="true"
           arrow-direction="right"
-          :border="false"
+          :border="true"
           @click="goNoticeList"
+        />
+        <u-cell
+          title="全部测验"
+          :is-link="true"
+          arrow-direction="right"
+          :border="false"
+          @click="goQuizHistory"
         />
       </template>
     </u-card>
@@ -204,6 +211,10 @@ function goChangePassword() {
 
 function goNoticeList() {
   uni.navigateTo({ url: '/pages/mine/notice-list' })
+}
+
+function goQuizHistory() {
+  uni.navigateTo({ url: '/pages/quiz/quiz-history' })
 }
 
 function onLogout() {

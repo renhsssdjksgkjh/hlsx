@@ -111,6 +111,14 @@
         "navigationBarBackgroundColor": "#ff7000",
         "navigationBarTextStyle": "white"
       }
+    },
+    {
+      "path": "pages/quiz/quiz-history",
+      "style": {
+        "navigationBarTitleText": "全部测验",
+        "navigationBarBackgroundColor": "#ff7000",
+        "navigationBarTextStyle": "white"
+      }
     }
   ],
   "globalStyle": {

@@ -17,6 +17,7 @@ const TAB_BAR_FILES = [
   'tab-wrong-active.png',
   'tab-mine.png',
   'tab-mine-active.png',
+  'fox-logo.png',
 ]
 
 function copyFileIfExists(from: string, to: string) {

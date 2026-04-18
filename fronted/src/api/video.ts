@@ -1,5 +1,11 @@
 import { request } from './request'
 
+export interface LatestQuiz {
+  score: number
+  total: number
+  created_at: string
+}
+
 export interface VideoItem {
   id: number
   title: string
@@ -7,6 +13,8 @@ export interface VideoItem {
   sort_order: number
   duration_sec?: number | null
   created_at?: string
+  /** 当前用户本课最近一次测验，无记录时为 null */
+  latest_quiz?: LatestQuiz | null
 }
 
 export function getVideos() {

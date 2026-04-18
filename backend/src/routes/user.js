@@ -61,6 +61,40 @@ router.get('/stats', authRequired, async (req, res, next) => {
   }
 });
 
+/** GET /api/user/quiz-records?limit=N 最近测验记录（多条） */
+router.get('/quiz-records', authRequired, async (req, res, next) => {
+  try {
+    let limit = parseInt(String(req.query.limit ?? '5'), 10);
+    if (!Number.isFinite(limit) || limit < 1) limit = 5;
+    if (limit > 50) limit = 50;
+    const uid = req.user.id;
+    const [rows] = await pool.query(
+      `SELECT r.id, r.video_id, v.title AS video_title, r.score, r.total, r.created_at
+       FROM hry_quiz_record r
+       INNER JOIN hry_video v ON v.id = r.video_id
+       WHERE r.user_id = ?
+       ORDER BY r.created_at DESC, r.id DESC
+       LIMIT ?`,
+      [uid, limit]
+    );
+    return res.json({
+      code: 0,
+      data: {
+        list: rows.map((r) => ({
+          id: r.id,
+          video_id: r.video_id,
+          video_title: r.video_title,
+          score: Number(r.score) || 0,
+          total: Number(r.total) || 0,
+          created_at: r.created_at,
+        })),
+      },
+    });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 const avatarsDir = path.join(__dirname, '../../uploads/avatars');
 fs.mkdirSync(avatarsDir, { recursive: true });
 

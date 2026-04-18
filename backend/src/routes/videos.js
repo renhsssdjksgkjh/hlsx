@@ -40,7 +40,9 @@ router.put('/:id/progress', async (req, res) => {
   sec = Math.floor(sec);
   await pool.query(
     `INSERT INTO hry_progress (user_id, video_id, position_sec) VALUES (?, ?, ?)
-     ON DUPLICATE KEY UPDATE position_sec = VALUES(position_sec), updated_at = CURRENT_TIMESTAMP`,
+     ON DUPLICATE KEY UPDATE
+       position_sec = GREATEST(COALESCE(position_sec, 0), VALUES(position_sec)),
+       updated_at = CURRENT_TIMESTAMP`,
     [req.user.id, vid, sec]
   );
   return res.json({ code: 0, data: { position_sec: sec } });
@@ -122,6 +124,14 @@ router.post('/:id/quiz/submit', async (req, res) => {
        VALUES (?, ?, ?, ?, ?)`,
       [req.user.id, vid, score, total, JSON.stringify({ details, submitted: answers })]
     );
+    const wrongIds = details.filter((d) => !d.is_correct).map((d) => d.question_id);
+    if (wrongIds.length) {
+      const ph = wrongIds.map(() => '?').join(',');
+      await pool.query(
+        `DELETE FROM hry_wrong_removed WHERE user_id = ? AND question_id IN (${ph})`,
+        [req.user.id, ...wrongIds]
+      );
+    }
   } catch (e) {
     console.error('hry_quiz_record insert', e.message);
   }
@@ -148,7 +158,20 @@ router.get('/:id', async (req, res) => {
     [id]
   );
   if (!rows.length) return res.status(404).json({ code: 404, message: '视频不存在' });
-  return res.json({ code: 0, data: rows[0] });
+  const [quizRows] = await pool.query(
+    `SELECT score, total, created_at FROM hry_quiz_record
+     WHERE user_id = ? AND video_id = ?
+     ORDER BY created_at DESC, id DESC LIMIT 1`,
+    [req.user.id, id]
+  );
+  const latest_quiz = quizRows.length
+    ? {
+        score: Number(quizRows[0].score) || 0,
+        total: Number(quizRows[0].total) || 0,
+        created_at: quizRows[0].created_at,
+      }
+    : null;
+  return res.json({ code: 0, data: { ...rows[0], latest_quiz } });
 });
 
 module.exports = router;
